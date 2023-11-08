@@ -21,5 +21,5 @@ The tool utilizes the following libraries and tools:
 
 You can automatically install these programs by using the following command:
 
-$ sh initial.sh
+    $ sh initial.sh
 

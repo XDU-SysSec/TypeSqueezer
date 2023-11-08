@@ -50,6 +50,7 @@ Again, replace ${file_name} with the name of your binary file.
 This will generate the result file in the TypeSqueezer-master/TypeSqueezer/res directory.
 
 **result format**
+
 Each *.res file contains different sections:
 
     [args] Regular (non-variadic) functions:

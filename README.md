@@ -48,3 +48,17 @@ Again, replace ${file_name} with the name of your binary file.
     $ ./main ${file_name}
     
 This will generate the result file in the TypeSqueezer-master/TypeSqueezer/res directory.
+
+**result format**
+Each *.res file contains different sections:
+
+    [args] Regular (non-variadic) functions:
+
+    <address> (<function symbol>) <min consumed argcount and max consumed argcount> <min consumed return argcount and max consumed return argcount> , (width for each argument and return argment) , (type for each argument and return argment)
+
+    [icall-args] Indirect callsites:
+
+    <address> (<function symbol>) <min consumed argcount and max consumed argcount> <min consumed return argcount and max consumed return argcount> , (width for each argument and return argment) , (type for each argument and return argment)
+
+    [done] Marker that indicates the end of the .res
+

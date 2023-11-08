@@ -31,7 +31,7 @@ To use this tool, follow the instructions below:
     
 2、Run the following command for static analysis
 
-    $ sh TypeSqueezer-master/TypeSqueezer/initialAnalyze.sh ${file_name}
+    $ sh ~/TypeSqueezer-master/TypeSqueezer/initialAnalyze.sh ${file_name}
     
 Replace ${file_name} with the actual name of your binary file.
 
@@ -39,7 +39,7 @@ Replace ${file_name} with the actual name of your binary file.
 
 4、Run the following command for dynamic analysis
 
-    $ sh TypeSqueezer-master/TypeSqueezer/pinbench/pinAnalyze.sh ${file_name}
+    $ sh ~/TypeSqueezer-master/TypeSqueezer/pinbench/pinAnalyze.sh ${file_name}
     
 Again, replace ${file_name} with the name of your binary file.
 

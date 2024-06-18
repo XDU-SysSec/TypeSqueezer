@@ -28,49 +28,68 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-// $Id: util.h,v 1.41 2008/06/19 22:13:43 jaw Exp $
+#if !defined(PATCHAPI_ATOM_H_)
+#define PATCHAPI_ATOM_H_
 
-#ifndef UTIL_H
-#define UTIL_H
+#include "common/src/Types.h" // Address
+#include "instructionAPI/h/Instruction.h" // Instruction::Ptr
+#include <list> // stl::list
 
-#ifndef FILE__
-#define FILE__ strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+class baseTramp;
+class codeGen;
+
+namespace Dyninst {
+
+namespace Relocation {
+
+class Transformer;
+class Widget;
+class RelocInsn;
+class Inst;
+class CFWidget;
+class RelocBlock;
+
+struct Patch;
+class TrackerElement;
+class CodeTracker;
+class CodeBuffer;
+
+// Widget code generation class
+class Widget {
+  friend class Transformer;
+ public:
+  typedef boost::shared_ptr<Widget> Ptr;
+  typedef boost::shared_ptr<RelocBlock> RelocBlockPtr;
+
+  Widget() {};
+
+  // A default value to make sure things don't go wonky.
+  virtual Address addr() const { return 0; }
+  virtual unsigned size() const { return 0; }
+  virtual InstructionAPI::Instruction::Ptr insn() const {
+    return InstructionAPI::Instruction::Ptr();
+  }
+
+  // Make binary from the thing
+  // Current address (if we need it)
+  // is in the codeGen object.
+  virtual bool generate(const codeGen &templ,
+                        const RelocBlock *trace,
+                        CodeBuffer &buffer) = 0;
+
+  virtual std::string format() const = 0;
+
+  virtual ~Widget() {};
+};
+
+ // A generic code patching mechanism
+struct Patch {
+   virtual bool apply(codeGen &gen, CodeBuffer *buf) = 0;
+   virtual unsigned estimate(codeGen &templ) = 0;
+   virtual ~Patch() {};
+};
+
+
+};
+};
 #endif
-
-#include <string>
-#include "common/src/headers.h"
-#include "common/src/Time.h"
-#include "common/src/Types.h"
-#include "common/src/stats.h"
-
-extern void printDyninstStats();
-extern CntStatistic insnGenerated;
-extern CntStatistic totalMiniTramps;
-extern CntStatistic trampBytes;
-extern CntStatistic ptraceOps;
-extern CntStatistic ptraceOtherOps;
-extern CntStatistic ptraceBytes;
-extern CntStatistic pointsUsed;
-
-bool waitForFileToExist(char *fname, int timeout_seconds);
-int openFileWhenNotBusy(char *fname, int flags, int mode, int timeout_seconds);
-
-inline unsigned uiHash(const unsigned &val) {
-  return val;
-}
-
-inline unsigned CThash(const unsigned &val) {
-  return val % 1048573;
-}
-
-unsigned ptrHash4(void *ptr);
-unsigned ptrHash16(void *ptr);
-
-inline unsigned intHash(const int &val) {
-  return val;
-}
-
-void
-dyninst_log_perror(const char* msg);
-
-#endif /* UTIL_H */

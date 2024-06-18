@@ -28,49 +28,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-// $Id: util.h,v 1.41 2008/06/19 22:13:43 jaw Exp $
+#ifndef _TMAP_H_
+#define _TMAP_H_
 
-#ifndef UTIL_H
-#define UTIL_H
+#include "dyn_regs.h"
 
-#ifndef FILE__
-#define FILE__ strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+#include "StackLocation.h"
+
+using namespace Dyninst;
+
+class TMap
+{
+    typedef std::map<StackLocation*, StackLocation*, less_StackLocation> mapping;
+    public:
+        TMap() {}
+
+        std::pair<mapping::iterator,bool> insert(std::pair<StackLocation*,StackLocation*> p) {
+                return _map.insert(p);
+            }
+
+        mapping::iterator find(StackLocation* l) { return _map.find(l); }
+        StackLocation* at(StackLocation* l) { return _map.at(l); }
+
+        mapping::iterator begin() { return _map.begin(); }
+        mapping::iterator end() { return _map.end(); }
+        mapping::reverse_iterator rbegin() { return _map.rbegin(); }
+        mapping::reverse_iterator rend() { return _map.rend(); }
+
+        void update(StackLocation* loc, int delta);
+        void update(StackLocation* loc, MachRegister reg, int size);
+
+        StackLocation* findInMap(StackLocation* src);
+
+        void print() const;
+
+    private:
+        mapping _map;
+};
+
 #endif
-
-#include <string>
-#include "common/src/headers.h"
-#include "common/src/Time.h"
-#include "common/src/Types.h"
-#include "common/src/stats.h"
-
-extern void printDyninstStats();
-extern CntStatistic insnGenerated;
-extern CntStatistic totalMiniTramps;
-extern CntStatistic trampBytes;
-extern CntStatistic ptraceOps;
-extern CntStatistic ptraceOtherOps;
-extern CntStatistic ptraceBytes;
-extern CntStatistic pointsUsed;
-
-bool waitForFileToExist(char *fname, int timeout_seconds);
-int openFileWhenNotBusy(char *fname, int flags, int mode, int timeout_seconds);
-
-inline unsigned uiHash(const unsigned &val) {
-  return val;
-}
-
-inline unsigned CThash(const unsigned &val) {
-  return val % 1048573;
-}
-
-unsigned ptrHash4(void *ptr);
-unsigned ptrHash16(void *ptr);
-
-inline unsigned intHash(const int &val) {
-  return val;
-}
-
-void
-dyninst_log_perror(const char* msg);
-
-#endif /* UTIL_H */

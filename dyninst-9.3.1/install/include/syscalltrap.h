@@ -28,49 +28,43 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-// $Id: util.h,v 1.41 2008/06/19 22:13:43 jaw Exp $
+/* $Id: syscalltrap.h,v 1.5 2006/03/29 21:35:04 bernat Exp $
+ */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef _SYSCALL_TRAP_H_
+#define _SYSCALL_TRAP_H_
 
-#ifndef FILE__
-#define FILE__ strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
-#endif
-
-#include <string>
-#include "common/src/headers.h"
-#include "common/src/Time.h"
 #include "common/src/Types.h"
-#include "common/src/stats.h"
 
-extern void printDyninstStats();
-extern CntStatistic insnGenerated;
-extern CntStatistic totalMiniTramps;
-extern CntStatistic trampBytes;
-extern CntStatistic ptraceOps;
-extern CntStatistic ptraceOtherOps;
-extern CntStatistic ptraceBytes;
-extern CntStatistic pointsUsed;
+/*
+ * This file provides prototypes for the data structures which track
+ * traps inserted at the exit of system calls. These are primarily
+ * used to signal when it is possible to modify the state of the program.
+ *
+ */
 
-bool waitForFileToExist(char *fname, int timeout_seconds);
-int openFileWhenNotBusy(char *fname, int flags, int mode, int timeout_seconds);
+/*
+ * This is the process-wide version: per system call how many are waiting,
+ * etc.
+ */
+struct syscallTrap {
+    // Reference count (for MT)
+    unsigned refcount;
+    // Syscall ID
+    Address syscall_id;
+    // /proc setting
+    int orig_setting;
+    // Address/trap tracking
+    char saved_insn[32];
+    // Handle for further info
+    void *saved_data;
+};
 
-inline unsigned uiHash(const unsigned &val) {
-  return val;
-}
+/*
+ * Per thread or LWP: a callback to be made when the
+ * system call exits
+ */
 
-inline unsigned CThash(const unsigned &val) {
-  return val % 1048573;
-}
+typedef bool (*syscallTrapCallbackLWP_t)(PCThread *thread, void *data);
 
-unsigned ptrHash4(void *ptr);
-unsigned ptrHash16(void *ptr);
-
-inline unsigned intHash(const int &val) {
-  return val;
-}
-
-void
-dyninst_log_perror(const char* msg);
-
-#endif /* UTIL_H */
+#endif /*_SYSCALL_TRAP_H_*/

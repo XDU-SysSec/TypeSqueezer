@@ -28,49 +28,59 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-// $Id: util.h,v 1.41 2008/06/19 22:13:43 jaw Exp $
+#if !defined(_R_T_BASE_H_)
+#define _R_T_BASE_H_
 
-#ifndef UTIL_H
-#define UTIL_H
+#include "common/src/Types.h" // Address
+#include <list>
+#include <map>
+#include <stack>
+#include "parseAPI/h/CFG.h"
+#include "boost/shared_ptr.hpp"
 
-#ifndef FILE__
-#define FILE__ strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+class block_instance;
+class baseTramp;
+
+namespace Dyninst {
+
+namespace Relocation {
+
+class Widget;
+class RelocBlock;
+class TargetInt;
+class CFWidget;
+class RelocInsn;
+struct RelocEdge;
+struct RelocEdges;
+class RelocGraph;
+
+// One of the things a Transformer 'returns' (modifies, really) is 
+// a list of where we require patches (branches from original code
+// to new code). This list is prioritized - Required, 
+// Suggested, and Not Required. Required means we have proof
+// that a patch is necessary for correct control flow. Suggested means
+// that, assuming correct parsing, no patch is necessary. Not Required
+// means that even with incorrect parsing no patch is necessary.
+// ... not sure how we can have that, but hey, we might as well
+// design it in.
+//
+// OffLimits indicates areas that we cannot overwrite with a branch
+
+ 
+class Transformer {
+ public:
+  typedef boost::shared_ptr<Widget> WidgetPtr;
+  typedef std::list<WidgetPtr> WidgetList;
+  typedef std::map<block_instance *, RelocBlock *> RelocBlockMap;
+
+  virtual bool processGraph(RelocGraph *);
+  virtual bool process(RelocBlock *, 
+                       RelocGraph *) = 0;
+
+  virtual ~Transformer() {};
+};
+
+};
+};
+
 #endif
-
-#include <string>
-#include "common/src/headers.h"
-#include "common/src/Time.h"
-#include "common/src/Types.h"
-#include "common/src/stats.h"
-
-extern void printDyninstStats();
-extern CntStatistic insnGenerated;
-extern CntStatistic totalMiniTramps;
-extern CntStatistic trampBytes;
-extern CntStatistic ptraceOps;
-extern CntStatistic ptraceOtherOps;
-extern CntStatistic ptraceBytes;
-extern CntStatistic pointsUsed;
-
-bool waitForFileToExist(char *fname, int timeout_seconds);
-int openFileWhenNotBusy(char *fname, int flags, int mode, int timeout_seconds);
-
-inline unsigned uiHash(const unsigned &val) {
-  return val;
-}
-
-inline unsigned CThash(const unsigned &val) {
-  return val % 1048573;
-}
-
-unsigned ptrHash4(void *ptr);
-unsigned ptrHash16(void *ptr);
-
-inline unsigned intHash(const int &val) {
-  return val;
-}
-
-void
-dyninst_log_perror(const char* msg);
-
-#endif /* UTIL_H */

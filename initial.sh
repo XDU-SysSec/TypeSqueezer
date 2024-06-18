@@ -15,7 +15,10 @@ cp mypin.cpp pin-3.27/source/tools/ManualExamples
 cd pin-3.27/source/tools/ManualExamples
 mkdir -p obj-intel64
 make obj-intel64/mypin.so
-#build FSROPT
+#build FSROPT, download dyninst first
+cd ~/TypeSqueezer-master
+wget https://github.com/dyninst/dyninst/archive/v9.3.1.tar.gz
+tar -zxvf v9.3.1.tar.gz
 cd ~/TypeSqueezer-master
 wget https://github.com/ylyanlin/FSROPT/archive/refs/heads/main.zip
 tar -xzvf main.zip

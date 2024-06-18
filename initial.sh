@@ -1,6 +1,7 @@
 #build boost-1.58.0
-wget https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz/download
+wget https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
 tar -xzvf boost_1_58_0.tar.gz
+cd boost_1_58_0
 ./bootstrap.sh
 sudo ./b2 install
 #build pin-3.27
@@ -16,6 +17,8 @@ cd ~/TypeSqueezer-master
 wget https://github.com/ylyanlin/FSROPT/archive/refs/heads/main.zip
 tar -xzvf main.zip
 cd FSROPT-master/typearmor-master
+cp -f ~/TypeSqueezer-master/file_to_replace/envsetup.sh .
+cp -f ~/TypeSqueezer-master/file_to_replace/Makefile.inc .
 . ./envsetup.sh
 cd di-opt
 make

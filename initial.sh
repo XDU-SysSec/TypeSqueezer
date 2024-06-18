@@ -1,3 +1,6 @@
+sudo apt install build-essential libbz2-dev # !!
+cd ~/TypeSqueezer-master # !!
+
 #build boost-1.58.0
 wget https://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
 tar -xzvf boost_1_58_0.tar.gz

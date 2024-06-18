@@ -16,7 +16,7 @@ The tool utilizes the following libraries and tools:
 
     dyninst 9.3.1: The content corresponding to this version of the library can be found in the TypeSqueezer-master/dyninst-9.3.1 folder.
     pin 3.27: Pin needs to be installed for the tool.
-    FSROPT: Another static analysis tool from <https://github.com/ylyanlin/FSROPT/archive/refs/heads/main.zip>.
+    FSROPT: Another static analysis tool from <https://github.com/ylyanlin/FSROPT/archive/refs/heads/main.zip>.Note that the files in the directory ~/TypeSqueezer-master/file_to_replace need to be used to replace the files with the same names in the FSROPT/typearmor-master directory.
     boost 1.58.0: The tool requires the system and thread modules from this version of Boost.
 
 You can automatically install these programs by using the following command:

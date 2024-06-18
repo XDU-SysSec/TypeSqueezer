@@ -16,7 +16,7 @@
  # limitations under the License.
  ## 
 
-export DYNINST_ROOT=~/TypeSqueezer-master/v.9.3.1/dyninst-9.3.1
+export DYNINST_ROOT=~/TypeSqueezer-master/v9.3.1/dyninst-9.3.1
 export DYNINST_BUILD_ROOT=~/TypeSqueezer-master/dyninst-9.3.1
 
 export DYNINST_LIB=$DYNINST_BUILD_ROOT/install/lib

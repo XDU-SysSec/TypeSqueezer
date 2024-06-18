@@ -38,6 +38,15 @@ ln -s ../FSROPT-master/typearmor-master/envsetup.sh .
 ln -s ../FSROPT-master/typearmor-master/server-bins .
 ln -s ../FSROPT-master/typearmor-master/out FSROPT-out
 
+cd ~/TypeSqueezer-master/dyninst-9.3.1/install/lib
+find . -type f -name "*9.3.1" -exec sh -c '
+  for file do
+    base_name=$(basename "$file" .9.3.1)
+    ln -s "$file" "${base_name}9.3"
+    ln -s "$file" "${base_name}"
+  done
+' \;
+
 cd ~/TypeSqueezer-master/TypeSqueezer/directcall/Dcall_tauCFI
 make
 cd ~/TypeSqueezer-master/TypeSqueezer/directcall/Dcall_TypeArmor

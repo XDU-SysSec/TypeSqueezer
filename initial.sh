@@ -19,11 +19,11 @@ tar -xzvf main.zip
 cd FSROPT-master/typearmor-master
 cp -f ~/TypeSqueezer-master/file_to_replace/envsetup.sh .
 cp -f ~/TypeSqueezer-master/file_to_replace/Makefile.inc .
-. ./envsetup.sh
-cd di-opt
-make
-cd ../static
-make
+# . ./envsetup.sh
+# cd di-opt
+# make
+# cd ../static
+# make
 
 #make links
 cd ~/TypeSqueezer-master/TypeSqueezer

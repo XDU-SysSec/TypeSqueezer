@@ -28,189 +28,108 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FRAME_H_
-#define FRAME_H_
+// $Id: frame.h,v 1.31 2006/11/28 23:34:04 legendre Exp $
 
-#include "basetypes.h"
-#include "Annotatable.h"
-#include <string>
-#include <set>
+#ifndef FRAME_H
+#define FRAME_H
 
-class StackCallback;
+#include "common/src/std_namesp.h"
+#include "common/src/Types.h"
+#include "common/src/Vector.h"
 
-namespace Dyninst {
-namespace Stackwalker {
+#include "instPoint.h"
+#include "baseTramp.h"
+#include "function.h"
 
-class Walker;
-class FrameStepper;
+#include "stackwalk/h/frame.h"
 
-class SW_EXPORT Frame : public AnnotatableDense {
-  friend class Walker;
-  friend class CallTree;
-  friend class ::StackCallback;
-protected:
-  Dyninst::MachRegisterVal ra;
-  Dyninst::MachRegisterVal fp;
-  Dyninst::MachRegisterVal sp;
-	
-  location_t ra_loc;
-  location_t fp_loc;
-  location_t sp_loc;
-  
-  mutable std::string sym_name;
-  mutable void *sym_value;
-  mutable enum { nv_unset, nv_set, nv_err } name_val_set;
-  
-  bool top_frame;
-  bool bottom_frame;
-  bool frame_complete;
-  bool non_call_frame;
-  
-  const Frame *prev_frame;
-  FrameStepper *stepper;
-  FrameStepper *next_stepper;
-  Walker *walker;
-  THR_ID originating_thread;
-  
-  void setStepper(FrameStepper *newstep);
-  void setWalker(Walker *newwalk);
-  void markTopFrame();
-  void markBottomFrame();
-  
-  void setNameValue() const;
-  
+class PCThread;
+class PCProcess;
+
+class Frame {
  public:
+
+  typedef enum { unset, 
+		 instrumentation, 
+		 signalhandler, 
+		 normal, 
+		 syscall, 
+		 iRPC, 
+		 unknown } frameType_t;
+
+  // default ctor (zero frame)
   Frame();
-  Frame(Walker *walker);
-  static Frame *newFrame(Dyninst::MachRegisterVal ra, Dyninst::MachRegisterVal sp, Dyninst::MachRegisterVal fp, Walker *walker);
 
-  bool operator==(const Frame &F) const;
+  // Real constructor -- fill-in.
+  Frame(const Dyninst::Stackwalker::Frame &swf,
+	PCProcess *proc, 
+	PCThread *thread,
+	bool uppermost);
 
-  Dyninst::MachRegisterVal getRA() const;
-  Dyninst::MachRegisterVal getSP() const;
-  Dyninst::MachRegisterVal getFP() const;
-  
-  void setRA(Dyninst::MachRegisterVal);
-  void setSP(Dyninst::MachRegisterVal);
-  void setFP(Dyninst::MachRegisterVal);
-  void setThread(THR_ID);
+ Frame(const Frame &f) :
+      sw_frame_(f.sw_frame_),
+      proc_(f.proc_),
+      thread_(f.thread_),
+      uppermost_(f.uppermost_) {};
 
-  void setNonCall();
+  const Frame &operator=(const Frame &f) {
+      sw_frame_ = f.sw_frame_;
+      proc_ = f.proc_;
+      thread_ = f.thread_;
+      uppermost_ = f.uppermost_;
+      return *this;
+  }
   
-  location_t getRALocation() const;
-  location_t getSPLocation() const;
-  location_t getFPLocation() const;
-  
-  void setRALocation(location_t newval);
-  void setSPLocation(location_t newval);
-  void setFPLocation(location_t newval);
-  
-  bool getName(std::string &str) const;
-  bool getObject(void* &obj) const;
-  bool getLibOffset(std::string &lib, Dyninst::Offset &offset, void* &symtab) const;
-  
-  bool isTopFrame() const;
-  bool isBottomFrame() const;
-  bool isFrameComplete() const;
-  
-  const Frame *getPrevFrame() const;
-  FrameStepper *getStepper() const;
-  FrameStepper *getNextStepper() const;
-  Walker *getWalker() const;
-  THR_ID getThread() const;
+  bool operator==(const Frame &F) {
+    return ((uppermost_ == F.uppermost_) &&
+	    (sw_frame_ == F.sw_frame_) &&
+	    (proc_    == F.proc_) &&
+	    (thread_  == F.thread_));
+  }
 
-  // Dyninst instrumentation constructs "synthetic" frames that don't correspond
-  // to calls. We really need to know about these...
-  // Also, signal handlers. 
-  bool nonCall() const;
+  Address  getPC() const { return (Address) sw_frame_.getRA(); }
+  // New method: unwind instrumentation
+  Address  getUninstAddr() const;
+  Address  getFP() const { return (Address) sw_frame_.getFP(); }
+  Address  getSP() const { return (Address) sw_frame_.getSP(); }
+  PCProcess *getProc() const { return proc_; }
+  PCThread *getThread() const { return thread_; }
+  void setThread(PCThread *thrd) { thread_ = thrd; }
+  bool     isUppermost() const { return uppermost_; }
 
-  ~Frame();
+
+  instPoint *getPoint();
+  baseTramp *getBaseTramp();
+  func_instance *getFunc();
+
+  bool	   isSignalFrame();
+  bool 	   isInstrumentation();
+  Address  getPClocation();
+
+  friend std::ostream & operator << ( std::ostream & s, Frame & m );
+  bool setPC(Address newpc);
+
+#if defined(arch_power)
+  // We store the actual return addr in a word on the stack
+  bool setRealReturnAddr(Address retaddr);
+#endif
+
+ private:
+  Dyninst::Stackwalker::Frame sw_frame_;        // StackwalkerAPI frame
+  PCProcess *		proc_;				// We're only valid for a single process anyway
+  PCThread *            thread_;                // User-level thread
+  bool			uppermost_;
 };
 
-//Default FrameComparators, if none provided
-typedef bool (*frame_cmp_t)(const Frame &a, const Frame &b); //Return true if a < b, by some comparison
-SW_EXPORT bool frame_addr_cmp(const Frame &a, const Frame &b); //Default
-SW_EXPORT bool frame_lib_offset_cmp(const Frame &a, const Frame &b);
-SW_EXPORT bool frame_symname_cmp(const Frame &a, const Frame &b);
-SW_EXPORT bool frame_lineno_cmp(const Frame &a, const Frame &b);
-
-class FrameNode;
-struct SW_EXPORT frame_cmp_wrapper {
-   frame_cmp_t f;
-   bool operator()(const FrameNode *a, const FrameNode *b) const;
+class int_stackwalk {
+   bool isValid_;
+   pdvector<Frame> stackwalk_;
+ public:
+   int_stackwalk();
+   bool isValid();
+   bool setStackwalk(pdvector<Frame> &new_stack);
+   bool clear();
+   pdvector<Frame>& getStackwalk();
 };
-typedef std::set<FrameNode *, frame_cmp_wrapper> frame_set_t;
-
-class SW_EXPORT FrameNode {
-   friend class CallTree;
-   friend class WalkerSet;
-   friend struct frame_cmp_wrapper;
-  private:
-
-   frame_set_t children;
-   FrameNode *parent;
-   enum {
-      FTFrame,
-      FTThread,
-      FTString,
-      FTHead
-   } frame_type;
-   Frame frame;
-   THR_ID thrd;
-   Walker *walker;
-   bool had_error;
-   std::string ftstring;
-
-   FrameNode(frame_cmp_wrapper f);
-  public:
-   ~FrameNode();
-
-   FrameNode(frame_cmp_wrapper f, std::string s);
-   FrameNode(const FrameNode &fn);
-   bool isFrame() const { return frame_type == FTFrame; }
-   bool isThread() const { return frame_type == FTThread; }
-   bool isHead() const { return frame_type == FTHead; }
-   bool isString() const { return frame_type == FTString; }
-
-   const Frame *getFrame() const { return (frame_type == FTFrame) ? &frame : NULL; }
-   Frame *getFrame() { return (frame_type == FTFrame) ? &frame : NULL; }
-   THR_ID getThread() const { return (frame_type == FTThread) ? thrd : NULL_LWP; }
-   std::string frameString() const { return ftstring; }
-   bool hadError() const { return (frame_type == FTThread) ? had_error : false; }
-
-   const frame_set_t &getChildren() const { return children; }
-   frame_set_t &getChildren() { return children; }
-
-   const FrameNode *getParent() const { return parent; }
-   FrameNode *getParent() { return parent; }
-
-   void addChild(FrameNode *fn) { children.insert(fn); fn->parent = this; }
-   
-   Walker *getWalker() { return walker; }
-   const Walker *getWalker() const { return walker; }
-};
-
-class SW_EXPORT CallTree {
-   friend class WalkerSet;
-  public:
-
-   CallTree(frame_cmp_t cmpf = frame_addr_cmp);
-   ~CallTree();
-
-   FrameNode *getHead() const { return head; }
-
-   FrameNode *addFrame(const Frame &f, FrameNode *parent);
-   FrameNode *addThread(THR_ID thrd, FrameNode *parent, Walker *walker, bool err_stack);
-   frame_cmp_t getComparator();
-   frame_cmp_wrapper getCompareWrapper();
-
-   void addCallStack(const std::vector<Frame> &stk, THR_ID thrd, Walker *walker, bool err_stack);
-  private:
-   FrameNode *head;
-   frame_cmp_wrapper cmp_wrapper;
-};
-
-}
-}
 
 #endif

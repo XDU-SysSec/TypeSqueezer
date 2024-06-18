@@ -27,63 +27,71 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-/* Plugin Interface */
 
-#ifndef PATCHAPI_H_INSTRUMENTOR_H_
-#define PATCHAPI_H_INSTRUMENTOR_H_
+#if !defined(_R_T_INSTRUMENTER_H_)
+#define _R_T_INSTRUMENTER_H_
 
-#include "PatchCommon.h"
-#include "Point.h"
-#include "AddrSpace.h"
-#include "Command.h"
+#include "Transformer.h"
+#include "dyninstAPI/src/instPoint.h"
+
+class edge_instance;
 
 namespace Dyninst {
-namespace PatchAPI {
+namespace Relocation {
 
-/* Relocate the original code and generate snippet binary code in mutatee's
-   address space. */
+class Instrumenter : public Transformer {
+ public:
 
-class PATCHAPI_EXPORT Instrumenter : public BatchCommand {
-  public:
-    friend class Patcher;
-    static Instrumenter* create(AddrSpace* as);
-    virtual ~Instrumenter() {}
+  virtual bool process(RelocBlock *cur, RelocGraph *);
+  
+     Instrumenter() : skip(NULL) {};
+  
+  virtual ~Instrumenter() {};
+  
+ private:
+  typedef enum {
+    Before,
+    After } When;
+    
+  typedef std::pair<RelocBlock *, When> InsertPoint;  
+  typedef std::map<InsertPoint, std::list<RelocBlock *> > EdgeRelocBlocks;
+  typedef boost::shared_ptr<CFWidget> CFWidgetPtr;
 
-    // Code Modification interfaces
-    // Function Replacement
-    virtual bool replaceFunction(PatchFunction* oldfunc,
-                                                 PatchFunction* newfunc);
-    virtual bool revertReplacedFunction(PatchFunction* oldfunc);
-    virtual FuncModMap& funcRepMap() { return functionReplacements_; }
+  // The instrumenters that can add new RelocBlocks have the CFG as an
+  // argument
+  bool funcEntryInstrumentation(RelocBlock *trace, RelocGraph *cfg);
+  bool edgeInstrumentation(RelocBlock *trace, RelocGraph *cfg);
+  bool postCallInstrumentation(RelocBlock *trace, RelocGraph *cfg);
+  bool funcExitInstrumentation(RelocBlock *trace, RelocGraph *cfg);
 
-    // Function Wrapping
-    virtual bool wrapFunction(PatchFunction* oldfunc,
-                                              PatchFunction* newfunc,
-                                              std::string name);
-    virtual bool revertWrappedFunction(PatchFunction* oldfunc);
-    virtual FuncWrapMap& funcWrapMap() { return functionWraps_; }
+  bool blockEntryInstrumentation(RelocBlock *trace);
+  bool blockExitInstrumentation(RelocBlock *trace);
+  bool preCallInstrumentation(RelocBlock *trace);
+  bool insnInstrumentation(RelocBlock *trace);
 
-    // Call Modification
-    virtual bool modifyCall(PatchBlock *callBlock, PatchFunction *newCallee,
-                                    PatchFunction *context = NULL);
-    virtual bool revertModifiedCall(PatchBlock *callBlock, PatchFunction *context = NULL);
-    virtual bool removeCall(PatchBlock *callBlock, PatchFunction *context = NULL);
-    virtual CallModMap& callModMap() { return callModifications_; }
+  bool handleUnconditionalExitInstrumentation(RelocBlock *trace, RelocGraph *cfg, instPoint *exit);
+  bool handleCondIndExits(RelocBlock *trace, RelocGraph *cfg, instPoint *exit);
+  bool handleCondDirExits(RelocBlock *trace, RelocGraph *cfg, instPoint *exit);
 
-    // Getters and setters
-    AddrSpace* as() const { return as_; }
-    void setAs(AddrSpace* as) { as_ = as; }
-    virtual bool isInstrumentable(PatchFunction* ) { return true; }
-  protected:
-    AddrSpace* as_;
-    CommandList user_commands_;
-    FuncModMap functionReplacements_;
-    FuncWrapMap functionWraps_;
-    CallModMap callModifications_;
+  WidgetPtr makeInstrumentation(PatchAPI::Point *point);
 
-    explicit Instrumenter(AddrSpace* as) : as_(as) {}
-    Instrumenter(): as_(NULL) {}
+  struct CallFallthroughPredicate {
+     bool operator()(RelocEdge *e);
+  };
+
+  struct EdgePredicate {
+
+	EdgePredicate(edge_instance *e) : e_(e) {}
+    bool operator()(RelocEdge *e);
+    edge_instance *e_;
+  };
+
+  RelocBlock *skip;
+
 };
-}
-}
-#endif  // PATCHAPI_H_INSTRUMENTOR_H_
+
+};
+};
+
+
+#endif
